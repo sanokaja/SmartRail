@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Setup — SmartRail</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px 0;
+        }
+        .box {
+            max-width: 460px; width: 100%;
+            background: white; border-radius: 15px;
+            padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .box-header {
+            text-align: center; margin-bottom: 28px;
+            padding-bottom: 20px; border-bottom: 3px solid #f59e0b;
+        }
+        .box-header .icon { font-size: 38px; margin-bottom: 10px; }
+        .box-header h2 { color: #f59e0b; font-weight: 700; font-size: 20px; }
+        .box-header p  { color: #999; font-size: 13px; margin-top: 4px; }
+        .warn-box {
+            background: #fff9f0; border-left: 5px solid #f59e0b;
+            padding: 12px 16px; border-radius: 10px;
+            margin-bottom: 22px; font-size: 13px; font-weight: 700; color: #92400e;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            font-weight: 600; color: #333; margin-bottom: 8px; display: block; font-size: 14px;
+        }
+        .form-group input {
+            width: 100%; padding: 12px;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+            font-size: 14px; font-family: 'Lato', sans-serif;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none; border-color: #f59e0b;
+            box-shadow: 0 0 0 0.2rem rgba(245,158,11,0.25);
+        }
+        .btn-go {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            font-family: 'Lato', sans-serif; transition: transform 0.3s;
+        }
+        .btn-go:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(245,158,11,0.4); }
+        .back-link {
+            display: block; text-align: center; margin-top: 16px;
+            color: #f59e0b; text-decoration: none; font-weight: 600; font-size: 13px;
+        }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="box-header">
+        <div class="icon">🛡️</div>
+        <h2>First-Time Setup</h2>
+        <p>Create the SmartRail super admin account</p>
+    </div>
+    <div class="warn-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        This page is disabled after the first admin is created. Change your password after first login.
+    </div>
+    <form method="POST">
+        <div class="form-group">
+            <label><i class="fas fa-user-shield"></i> Username</label>
+            <input type="text" name="username" value="admin" required>
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email</label>
+            <input type="email" name="email" placeholder="admin@smartrail.in" required>
+        </div>
+        <div class="form-group">
+            <label><i class="fas fa-lock"></i> Password</label>
+            <input type="password" name="password" placeholder="Min 6 characters" required minlength="6">
+        </div>
+        <button type="submit" class="btn-go">
+            <i class="fas fa-user-plus"></i> Create Admin Account
+        </button>
+    </form>
+    <a href="{{ url_for('admin.admin_login') }}" class="back-link">Already set up? Sign in →</a>
+</div>
+</body>
+</html>

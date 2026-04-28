@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tickets - RAILWAY RESERVATION</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='land.css') }}">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 120vh;
+        }
+
+        .navbar {
+    background-color: rgba(235, 231, 207, 0.092);
+}
+
+.nav-link {
+    color: aliceblue !important;
+    font-size: 20px;
+}
+
+.logo {
+    width: 65px;
+    background-color: rgba(235, 237, 238, 0.97);
+}
+
+        .page-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 1200px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .page-header h2 {
+            color: #667eea;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .tickets-container {
+            max-width: 1200px;
+            margin: 0 auto 50px;
+            padding: 0 20px;
+        }
+
+        .ticket-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .pnr-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-badge.confirmed {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .status-badge.cancelled {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .status-badge.pending {
+            background: #fff3e0;
+            color: #ff9800;
+        }
+
+        .ticket-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .journey-route {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .journey-route i {
+            color: #667eea;
+        }
+
+        .no-tickets {
+            background: white;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .no-tickets i {
+            font-size: 80px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .no-tickets h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .no-tickets p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .book-now-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+
+        .book-now-btn:hover {
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .ticket-details {
+                grid-template-columns: 1fr;
+            }
+
+            .pnr-number {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <img src="{{ url_for('static', filename='images/logoo.png') }}" class="logo" style="height: 50px;" alt="Logo">
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.land') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('main.my_tickets') }}">My Tickets</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.profile') }}">Profile</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h2><i class="fas fa-ticket-alt"></i> My Tickets</h2>
+</div>
+
+<!-- Tickets List -->
+<div class="tickets-container">
+    {% if tickets %}
+        {% for ticket in tickets %}
+        <div class="ticket-card">
+            <div class="ticket-header">
+                <div>
+                    <div style="color: #666; font-size: 12px; margin-bottom: 5px;">PNR</div>
+                    <div class="pnr-number">{{ ticket.pnr }}</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="status-badge {{ ticket.status.lower() }}">
+                        {% if ticket.status == 'Confirmed' %}
+                            <i class="fas fa-check-circle"></i> {{ ticket.status }}
+                        {% elif ticket.status == 'Cancelled' %}
+                            <i class="fas fa-times-circle"></i> {{ ticket.status }}
+                        {% else %}
+                            <i class="fas fa-clock"></i> {{ ticket.status }}
+                        {% endif %}
+                    </div>
+                    {% if ticket.status == 'Confirmed' %}
+                        {% set today = now.date() if now else None %}
+                        {% set journey_date = ticket.journey_date %}
+                        {% if journey_date >= today %}
+                        <button class="btn btn-sm btn-danger cancel-ticket-btn" 
+                                data-pnr="{{ ticket.pnr }}"
+                                style="padding: 8px 20px; border-radius: 25px; font-weight: 600;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        {% else %}
+                        <button class="btn btn-sm btn-warning delete-ticket-btn" 
+                                data-pnr="{{ ticket.pnr }}"
+                                style="padding: 8px 20px; border-radius: 25px; font-weight: 600; background: #ff9800; border-color: #ff9800;">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                        {% endif %}
+                    {% elif ticket.status == 'Cancelled' %}
+                        <button class="btn btn-sm btn-warning delete-ticket-btn" 
+                                data-pnr="{{ ticket.pnr }}"
+                                style="padding: 8px 20px; border-radius: 25px; font-weight: 600; background: #ff9800; border-color: #ff9800;">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="journey-route" onclick="viewTicket('{{ ticket.pnr }}')" style="cursor: pointer;">
+                <strong style="font-size: 18px;">{{ ticket.source }}</strong>
+                <i class="fas fa-arrow-right"></i>
+                <strong style="font-size: 18px;">{{ ticket.destination }}</strong>
+            </div>
+
+            <div class="ticket-details" onclick="viewTicket('{{ ticket.pnr }}')" style="cursor: pointer;">
+                <div class="detail-item">
+                    <span class="detail-label">Train</span>
+                    <span class="detail-value">{{ ticket.train_name }}</span>
+                    <span style="color: #666; font-size: 14px;">{{ ticket.train_number }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Journey Date</span>
+                    <span class="detail-value">{{ ticket.journey_date.strftime('%d %b %Y') }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Class</span>
+                    <span class="detail-value">{{ ticket.class_name }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Passengers</span>
+                    <span class="detail-value">{{ ticket.passenger_count }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Booked On</span>
+                    <span class="detail-value">{{ ticket.booking_date.strftime('%d %b %Y') }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-tickets">
+            <i class="fas fa-ticket-alt"></i>
+            <h3>No Tickets Found</h3>
+            <p>You haven't booked any tickets yet. Start your journey now!</p>
+            <a href="{{ url_for('main.land') }}" class="book-now-btn">
+                <i class="fas fa-search"></i> Search Trains
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function viewTicket(pnr) {
+        window.location.href = '/view-ticket/' + pnr;
+    }
+
+    // Handle cancel ticket button
+    document.addEventListener('DOMContentLoaded', function() {
+        const cancelButtons = document.querySelectorAll('.cancel-ticket-btn');
+        
+        cancelButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering viewTicket
+                
+                const pnr = this.getAttribute('data-pnr');
+                
+                if (confirm(`Are you sure you want to cancel ticket ${pnr}?\n\nRefund will be processed within 5-7 business days.`)) {
+                    // Disable button and show loading
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+                    
+                    // Send cancel request
+                    fetch(`/cancel-ticket/${pnr}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload(); // Reload page to show updated status
+                        } else {
+                            alert('Error: ' + data.message);
+                            this.disabled = false;
+                            this.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error cancelling ticket. Please try again.');
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                    });
+                }
+            });
+        });
+
+        // Handle delete ticket button
+        const deleteButtons = document.querySelectorAll('.delete-ticket-btn');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering viewTicket
+                
+                const pnr = this.getAttribute('data-pnr');
+                
+                if (confirm(`Are you sure you want to DELETE ticket ${pnr}?\n\nThis will permanently remove it from your ticket history.\n\nThis action cannot be undone!`)) {
+                    // Disable button and show loading
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+                    
+                    // Send delete request
+                    fetch(`/delete-ticket/${pnr}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove the ticket card from DOM with animation
+                            const ticketCard = this.closest('.ticket-card');
+                            ticketCard.style.transition = 'opacity 0.3s, transform 0.3s';
+                            ticketCard.style.opacity = '0';
+                            ticketCard.style.transform = 'translateX(-20px)';
+                            
+                            setTimeout(() => {
+                                ticketCard.remove();
+                                
+                                // Check if there are any tickets left
+                                const remainingTickets = document.querySelectorAll('.ticket-card');
+                                if (remainingTickets.length === 0) {
+                                    location.reload(); // Reload to show "No tickets" message
+                                } else {
+                                    alert(data.message);
+                                }
+                            }, 300);
+                        } else {
+                            alert('Error: ' + data.message);
+                            this.disabled = false;
+                            this.innerHTML = '<i class="fas fa-trash"></i> Delete';
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error deleting ticket. Please try again.');
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-trash"></i> Delete';
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

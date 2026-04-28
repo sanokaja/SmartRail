@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - RAILWAY RESERVATION</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 20px 0;
+        }
+        .payment-container { max-width: 900px; margin: 30px auto; }
+        .payment-card {
+            background: white; border-radius: 15px;
+            padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .payment-header {
+            text-align: center; margin-bottom: 30px;
+            padding-bottom: 20px; border-bottom: 3px solid #667eea;
+        }
+        .payment-header h2 { color: #667eea; font-weight: 700; }
+        .booking-summary { background: #f8f9ff; padding: 25px; border-radius: 10px; margin-bottom: 30px; }
+        .summary-row { display: flex; justify-content: space-between; margin: 12px 0; padding: 8px 0; }
+        .summary-row.total {
+            border-top: 2px solid #667eea; padding-top: 15px; margin-top: 15px;
+            font-size: 20px; font-weight: 700; color: #667eea;
+        }
+        .payment-methods { margin: 30px 0; }
+        .payment-method {
+            border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px;
+            margin-bottom: 15px; cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .payment-method:hover { border-color: #667eea; background: #f8f9ff; }
+        .payment-method.active { border-color: #667eea; background: #f8f9ff; border-width: 3px; }
+        .payment-method input[type="radio"] { width: 20px; height: 20px; accent-color: #667eea; }
+        .payment-method i { font-size: 28px; color: #667eea; width: 40px; text-align: center; }
+        .payment-method-info { flex: 1; }
+        .payment-method-title { font-weight: 700; font-size: 18px; color: #333; }
+        .payment-method-desc { color: #666; font-size: 14px; }
+        .card-details { display: none; margin-top: 20px; padding: 25px; background: #f8f9fa; border-radius: 10px; }
+        .card-details.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+        .form-control { border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px; }
+        .form-control:focus { border-color: #667eea; box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25); }
+        .pay-btn {
+            width: 100%; padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 18px; font-weight: 700; cursor: pointer; transition: transform 0.3s;
+        }
+        .pay-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(102,126,234,0.4); }
+        .pay-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .secure-payment { text-align: center; margin-top: 20px; color: #666; }
+        .secure-payment i { color: #4caf50; margin-right: 5px; }
+
+        /* WL CARD */
+        @keyframes slideDown {
+            from { opacity:0; transform:translateY(-20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .wl-card {
+            border-radius: 16px; margin-bottom: 28px; overflow: hidden;
+            animation: slideDown 0.6s cubic-bezier(.22,.68,0,1.2);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+        .wl-header {
+            background: #1a1a2e; color: white;
+            padding: 18px 24px; display: flex;
+            align-items: center; justify-content: space-between;
+        }
+        .wl-header-title { font-size: 15px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
+        .wl-header-pnr { font-size: 12px; color: #888; letter-spacing: 1px; }
+        .wl-status-bar {
+            background: #16213e; color: white; padding: 14px 24px;
+            display: flex; gap: 16px; align-items: center; font-size: 14px; flex-wrap: wrap;
+        }
+        .wl-badge {
+            background: #ff9800; color: white; padding: 4px 14px;
+            border-radius: 20px; font-weight: 900; font-size: 16px; letter-spacing: 1px;
+        }
+        .wl-body { background: #0f3460; padding: 24px; }
+        .wl-prob-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+        .wl-prob-label { color: #aaa; font-size: 13px; }
+        .wl-prob-pct { font-size: 32px; font-weight: 900; color: white; }
+        .wl-bar-bg { background: rgba(255,255,255,0.12); border-radius: 8px; height: 14px; margin-bottom: 8px; }
+        .wl-bar-fill { height: 14px; border-radius: 8px; width: 0%; transition: width 1.2s ease; }
+        .wl-sample { color: #888; font-size: 12px; text-align: center; margin-bottom: 20px; font-style: italic; }
+        .wl-divider { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 18px 0; }
+        .wl-recommendation {
+            background: rgba(255,255,255,0.07); border-radius: 12px;
+            padding: 18px 20px; margin-bottom: 20px; border-left: 5px solid #4caf50;
+        }
+        .wl-rec-action { font-size: 20px; font-weight: 900; color: white; margin-bottom: 8px; }
+        .wl-rec-advice { color: #bbb; font-size: 13px; line-height: 1.7; }
+        .wl-refund-box { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+        .wl-refund-title { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .wl-refund-row {
+            display: flex; justify-content: space-between; padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 14px;
+        }
+        .wl-refund-row:last-child { border-bottom: none; }
+        .wl-refund-label { color: #bbb; }
+        .wl-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .wl-btn-keep {
+            padding: 14px; background: linear-gradient(135deg,#4caf50,#388e3c);
+            color: white; border: none; border-radius: 10px;
+            font-weight: 700; font-size: 15px; cursor: pointer; transition: transform 0.2s;
+        }
+        .wl-btn-keep:hover { transform: translateY(-2px); }
+        .wl-btn-cancel {
+            padding: 14px; background: transparent; color: #ff6b6b;
+            border: 2px solid #ff6b6b; border-radius: 10px;
+            font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s;
+        }
+        .wl-btn-cancel:hover { background: rgba(255,107,107,0.1); }
+        .wl-footer { background: #1a1a2e; padding: 10px 24px; text-align: right; font-size: 11px; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="payment-container">
+<div class="payment-card">
+
+    <div class="payment-header">
+        <h2><i class="fas fa-credit-card"></i> Payment</h2>
+    </div>
+
+    {% if booking.booking_status == 'WaitingList' and booking.wl_prediction %}
+    {% set p = booking.wl_prediction %}
+    <div class="wl-card">
+
+        <div class="wl-header">
+            <div class="wl-header-title">🚂 Your Waitlist Analysis</div>
+            <div class="wl-header-pnr">PNR: {{ pnr_number }}</div>
+        </div>
+
+        <div class="wl-status-bar">
+            <span class="wl-badge">WL/{{ booking.wl_number }}</span>
+            <span>{{ booking.class_name }}</span>
+            <span>·</span>
+            <span>{{ booking.train_name }}</span>
+            <span style="margin-left:auto;font-size:11px;color:#666;">{{ p.model_used }}</span>
+        </div>
+
+        <div class="wl-body">
+
+            <div class="wl-prob-row">
+                <span class="wl-prob-label">Confirmation Chance</span>
+                <span class="wl-prob-pct">{{ p.probability }}%</span>
+            </div>
+            <div class="wl-bar-bg">
+                <div class="wl-bar-fill" id="wlBarFill"
+                    data-pct="{{ p.probability }}"
+                    style="background:
+                    {% if p.probability >= 75 %}linear-gradient(90deg,#4caf50,#81c784)
+                    {% elif p.probability >= 55 %}linear-gradient(90deg,#ff9800,#ffb74d)
+                    {% elif p.probability >= 35 %}linear-gradient(90deg,#ff6f00,#ffa000)
+                    {% else %}linear-gradient(90deg,#f44336,#e57373){% endif %};">
+                </div>
+            </div>
+            <div class="wl-sample">
+                Based on {{ p.trained_on }} similar WL bookings on this route and class
+            </div>
+
+            <hr class="wl-divider">
+
+            <div class="wl-recommendation" style="border-left-color:
+                {% if p.probability >= 75 %}#4caf50
+                {% elif p.probability >= 55 %}#ff9800
+                {% elif p.probability >= 35 %}#ff6f00
+                {% else %}#f44336{% endif %};">
+                <div class="wl-rec-action">{{ p.emoji }} {{ p.action }}</div>
+                <div class="wl-rec-advice">{{ p.advice }}</div>
+            </div>
+
+            <div class="wl-refund-box">
+                <div class="wl-refund-title">Refund if you cancel</div>
+                <div class="wl-refund-row">
+                    <span class="wl-refund-label">Cancel NOW</span>
+                    <span style="font-weight:700;color:#4caf50;">₹{{ "%.2f"|format(p.refund_now) }}</span>
+                </div>
+                <div class="wl-refund-row">
+                    <span class="wl-refund-label">After 48 hrs</span>
+                    <span style="font-weight:700;color:#ff9800;">₹{{ "%.2f"|format(p.refund_48hr) }}</span>
+                </div>
+                <div class="wl-refund-row">
+                    <span class="wl-refund-label">After 24 hrs</span>
+                    <span style="font-weight:700;color:#f44336;">₹{{ "%.2f"|format(p.refund_24hr) }}</span>
+                </div>
+            </div>
+
+            <div class="wl-actions">
+                <button class="wl-btn-keep" onclick="keepTicket()">
+                    ✅ Keep Ticket
+                </button>
+                <button class="wl-btn-cancel" onclick="cancelTicket('{{ pnr_number }}', {{ p.refund_now }})">
+                    ❌ Cancel Now (₹{{ "%.2f"|format(p.refund_now) }})
+                </button>
+            </div>
+
+        </div>
+        <div class="wl-footer">
+            Powered by {{ p.model_used }} · {{ p.trained_on }} training samples
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Booking Summary -->
+    <div class="booking-summary">
+        <h5 style="color:#667eea;font-weight:700;margin-bottom:15px;">
+            <i class="fas fa-file-invoice"></i> Booking Summary
+        </h5>
+        <div class="summary-row"><span>PNR Number:</span><strong>{{ pnr_number }}</strong></div>
+        <div class="summary-row"><span>Train:</span><strong>{{ booking.train_name }}</strong></div>
+        <div class="summary-row">
+            <span>Journey:</span>
+            <strong>{{ booking.source }} → {{ booking.destination }}</strong>
+        </div>
+        <div class="summary-row"><span>Date:</span><strong>{{ booking.date }}</strong></div>
+        <div class="summary-row"><span>Class:</span><strong>{{ booking.class_name }}</strong></div>
+        {% if booking.booking_status == 'WaitingList' %}
+        <div class="summary-row">
+            <span>Status:</span>
+            <strong style="color:#ff9800;">WaitingList — WL/{{ booking.wl_number }}</strong>
+        </div>
+        {% endif %}
+        <div class="summary-row"><span>Passengers:</span><strong>{{ booking.passenger_count }}</strong></div>
+        <div class="summary-row total">
+            <span>Total Amount:</span>
+            <span>₹{{ "%.2f"|format(booking.total_amount) }}</span>
+        </div>
+    </div>
+
+    <!-- Payment Methods -->
+    <form id="paymentForm" method="POST" action="{{ url_for('main.process_payment') }}">
+        <input type="hidden" name="pnr_number" value="{{ pnr_number }}">
+        <input type="hidden" name="amount" value="{{ booking.total_amount }}">
+
+        <div class="payment-methods">
+            <h5 style="color:#333;font-weight:700;margin-bottom:20px;">Select Payment Method</h5>
+
+            <div class="payment-method" onclick="selectPayment('card')">
+                <input type="radio" name="payment_method" value="card" id="card" required>
+                <i class="fas fa-credit-card"></i>
+                <div class="payment-method-info">
+                    <div class="payment-method-title">Credit / Debit Card</div>
+                    <div class="payment-method-desc">Visa, Mastercard, Rupay</div>
+                </div>
+            </div>
+            <div id="cardDetails" class="card-details">
+                <div class="row">
+                    <div class="col-md-12 form-group">
+                        <label>Card Number</label>
+                        <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                    </div>
+                    <div class="col-md-8 form-group">
+                        <label>Card Holder Name</label>
+                        <input type="text" class="form-control" placeholder="Name on card">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>CVV</label>
+                        <input type="password" class="form-control" placeholder="123" maxlength="3">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Expiry Month</label>
+                        <select class="form-control">
+                            <option value="">Month</option>
+                            <option>01</option><option>02</option><option>03</option>
+                            <option>04</option><option>05</option><option>06</option>
+                            <option>07</option><option>08</option><option>09</option>
+                            <option>10</option><option>11</option><option>12</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Expiry Year</label>
+                        <select class="form-control">
+                            <option value="">Year</option>
+                            <option>2025</option><option>2026</option><option>2027</option>
+                            <option>2028</option><option>2029</option><option>2030</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-method" onclick="selectPayment('upi')">
+                <input type="radio" name="payment_method" value="upi" id="upi">
+                <i class="fab fa-google-pay"></i>
+                <div class="payment-method-info">
+                    <div class="payment-method-title">UPI</div>
+                    <div class="payment-method-desc">Google Pay, PhonePe, Paytm</div>
+                </div>
+            </div>
+            <div id="upiDetails" class="card-details">
+                <div class="form-group">
+                    <label>UPI ID</label>
+                    <input type="text" class="form-control" placeholder="yourname@upi">
+                </div>
+            </div>
+
+            <div class="payment-method" onclick="selectPayment('netbanking')">
+                <input type="radio" name="payment_method" value="netbanking" id="netbanking">
+                <i class="fas fa-university"></i>
+                <div class="payment-method-info">
+                    <div class="payment-method-title">Net Banking</div>
+                    <div class="payment-method-desc">All major banks supported</div>
+                </div>
+            </div>
+            <div id="netbankingDetails" class="card-details">
+                <div class="form-group">
+                    <label>Select Bank</label>
+                    <select class="form-control">
+                        <option value="">Choose your bank</option>
+                        <option>State Bank of India</option>
+                        <option>HDFC Bank</option>
+                        <option>ICICI Bank</option>
+                        <option>Axis Bank</option>
+                        <option>Punjab National Bank</option>
+                        <option>Bank of Baroda</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="payment-method" onclick="selectPayment('wallet')">
+                <input type="radio" name="payment_method" value="wallet" id="wallet">
+                <i class="fas fa-wallet"></i>
+                <div class="payment-method-info">
+                    <div class="payment-method-title">Wallets</div>
+                    <div class="payment-method-desc">Paytm, Mobikwik, Amazon Pay</div>
+                </div>
+            </div>
+            <div id="walletDetails" class="card-details">
+                <div class="form-group">
+                    <label>Select Wallet</label>
+                    <select class="form-control">
+                        <option value="">Choose wallet</option>
+                        <option>Paytm</option><option>Mobikwik</option>
+                        <option>Amazon Pay</option><option>PhonePe</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="pay-btn" id="payButton">
+            <i class="fas fa-lock"></i> Pay ₹{{ "%.2f"|format(booking.total_amount) }}
+        </button>
+        <div class="secure-payment">
+            <i class="fas fa-shield-alt"></i> Your payment is secure and encrypted
+        </div>
+    </form>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Animate WL bar after load
+    window.addEventListener('load', function() {
+        const bar = document.getElementById('wlBarFill');
+        if (bar) {
+            const pct = bar.dataset.pct || 0;
+            setTimeout(() => { bar.style.width = pct + '%'; }, 400);
+        }
+    });
+
+    function keepTicket() {
+        document.querySelector('.payment-methods').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelTicket(pnr, refundAmt) {
+        if (confirm('Cancel this WL ticket?\nYou will receive ₹' + refundAmt.toFixed(2) + ' refund.')) {
+            fetch('/cancel-ticket/' + pnr, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) window.location.href = '/my-tickets';
+            });
+        }
+    }
+
+    function selectPayment(method) {
+        document.querySelectorAll('.card-details').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
+        document.getElementById(method).checked = true;
+        document.getElementById(method + 'Details').classList.add('active');
+        document.getElementById(method).closest('.payment-method').classList.add('active');
+    }
+
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        if (!document.querySelector('input[name="payment_method"]:checked')) {
+            e.preventDefault();
+            alert('Please select a payment method');
+            return;
+        }
+        const btn = document.getElementById('payButton');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    });
+</script>
+</body>
+</html>

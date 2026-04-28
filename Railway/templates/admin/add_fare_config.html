@@ -1,0 +1,65 @@
+{% extends 'admin/base.html' %}
+{% block title %}Add Fare Config{% endblock %}
+{% block page_title %}Add Fare Configuration{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('admin.fare_config') }}" class="btn-go btn-ghost btn-sm">
+    <i class="fas fa-arrow-left"></i> Back
+</a>
+{% endblock %}
+{% block content %}
+<div class="a-card" style="max-width:620px;">
+    <form method="POST">
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Class *</label>
+                <select name="class_name" class="f-input" required>
+                    {% for c in ['SL','3A','2A','1A','CC','EC','2S'] %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Train Type *</label>
+                <select name="train_type" class="f-input" required>
+                    {% for t in ['Mail','Express','Superfast','Rajdhani','Shatabdi'] %}
+                    <option value="{{ t }}">{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Per-km Rate (₹) *</label>
+                <input type="number" step="0.01" name="per_km_rate" class="f-input" required min="0">
+            </div>
+            <div class="f-group">
+                <label class="f-label">Reservation Charge (₹)</label>
+                <input type="number" step="1" name="reservation_charge" class="f-input" value="0">
+            </div>
+        </div>
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Superfast Surcharge (₹)</label>
+                <input type="number" step="1" name="superfast_surcharge" class="f-input" value="0">
+            </div>
+            <div class="f-group">
+                <label class="f-label">Tatkal Surcharge (₹)</label>
+                <input type="number" step="1" name="tatkal_surcharge" class="f-input" value="0">
+            </div>
+        </div>
+        <div class="f-group">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; color:#333; font-size:14px;">
+                <input type="checkbox" name="gst_applicable"
+                       style="width:18px; height:18px; accent-color:#f59e0b;">
+                Apply GST (5%) when total fare exceeds ₹1000
+            </label>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn-go btn-primary">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <a href="{{ url_for('admin.fare_config') }}" class="btn-go btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

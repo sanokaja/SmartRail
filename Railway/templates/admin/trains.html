@@ -1,0 +1,92 @@
+{% extends 'admin/base.html' %}
+{% block title %}Trains{% endblock %}
+{% block page_title %}Train Management{% endblock %}
+{% block page_subtitle %}{{ trains|length }} trains in the system{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin.add_train') }}" class="btn-go btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Add Train
+</a>
+{% endblock %}
+
+{% block content %}
+{% if not trains %}
+<div class="a-card" style="text-align:center; padding:60px;">
+    <div style="font-size:56px; margin-bottom:16px;">🚂</div>
+    <div style="font-size:20px; font-weight:900; color:#333; margin-bottom:16px;">No trains yet</div>
+    <a href="{{ url_for('admin.add_train') }}" class="btn-go btn-primary">
+        <i class="fas fa-plus"></i> Add First Train
+    </a>
+</div>
+{% else %}
+<div class="a-card" style="padding:0; overflow:hidden;">
+    <div style="overflow-x:auto;">
+    <table class="a-table">
+        <thead><tr>
+            <th>Train No.</th><th>Name</th><th>Route</th><th>Type</th>
+            <th>Distance</th><th>Timings</th><th>Classes</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for t in trains %}
+        <tr>
+            <td><strong style="color:#f59e0b; font-size:15px;">{{ t.train_number }}</strong></td>
+            <td>
+                <div style="font-weight:700;">{{ t.train_name }}</div>
+                <div style="font-size:11px; color:#bbb;">{{ t.days_of_operation }}</div>
+            </td>
+            <td style="font-size:12px;">
+                <strong>{{ t.source }}</strong><br>
+                <span style="color:#bbb;">↓</span><br>
+                <strong>{{ t.destination }}</strong>
+            </td>
+            <td>
+                <span class="bx {% if t.train_type=='Rajdhani' %}bx-tatkal
+                    {% elif t.train_type=='Shatabdi' %}bx-rac
+                    {% elif t.train_type=='Superfast' %}bx-confirmed
+                    {% else %}bx-pending{% endif %}">
+                    {{ t.train_type }}
+                </span>
+            </td>
+            <td style="color:#999; font-size:13px;">{{ t.distance_km }} km</td>
+            <td style="font-size:12px;">
+                Dep: <strong>{{ t.departure_time }}</strong><br>
+                Arr: <strong>{{ t.arrival_time }}</strong><br>
+                <span style="color:#bbb;">{{ t.duration }}</span>
+            </td>
+            <td>
+                {% for s in t.seats %}
+                <span class="bx bx-pending" style="margin:2px; font-size:10px;">
+                    {{ s.class_name }}({{ s.total_seats }})
+                </span>
+                {% endfor %}
+            </td>
+            <td>
+                {% if t.is_active %}
+                <span class="bx bx-confirmed">Active</span>
+                {% else %}
+                <span class="bx bx-cancelled">Inactive</span>
+                {% endif %}
+            </td>
+            <td>
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                    <a href="{{ url_for('admin.edit_train', train_id=t.id) }}"
+                       class="btn-go btn-ghost btn-sm" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_train', train_id=t.id) }}"
+                          style="display:inline;"
+                          onsubmit="return confirm('Delete {{ t.train_number }} — {{ t.train_name }}? This cannot be undone.')">
+                        <button class="btn-go btn-danger btn-sm" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

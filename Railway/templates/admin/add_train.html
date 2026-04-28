@@ -1,0 +1,133 @@
+{% extends 'admin/base.html' %}
+{% block title %}Add Train{% endblock %}
+{% block page_title %}Add New Train{% endblock %}
+{% block page_subtitle %}Fare is auto-computed from Fare Config — add that first if empty{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin.trains') }}" class="btn-go btn-ghost btn-sm">
+    <i class="fas fa-arrow-left"></i> Back
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="a-card" style="max-width:840px;">
+    <form method="POST">
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Train Number *</label>
+                <input type="text" name="train_number" class="f-input" placeholder="e.g. 12301" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Train Name *</label>
+                <input type="text" name="train_name" class="f-input" placeholder="e.g. Howrah Rajdhani Express" required>
+            </div>
+        </div>
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Source Station *</label>
+                <input type="text" name="source" class="f-input" placeholder="e.g. Howrah" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Destination Station *</label>
+                <input type="text" name="destination" class="f-input" placeholder="e.g. New Delhi" required>
+            </div>
+        </div>
+        <div class="f-row3">
+            <div class="f-group">
+                <label class="f-label">Departure Time *</label>
+                <input type="text" name="departure_time" class="f-input" placeholder="04:55 PM" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Arrival Time *</label>
+                <input type="text" name="arrival_time" class="f-input" placeholder="10:00 AM" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Duration *</label>
+                <input type="text" name="duration" class="f-input" placeholder="17h 05m" required>
+            </div>
+        </div>
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Distance (km) *</label>
+                <input type="number" name="distance_km" class="f-input" placeholder="1531" required min="1">
+            </div>
+            <div class="f-group">
+                <label class="f-label">Train Type *</label>
+                <select name="train_type" class="f-input" required>
+                    {% for tp in ['Rajdhani','Shatabdi','Superfast','Express','Mail'] %}
+                    <option value="{{ tp }}">{{ tp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="f-group">
+            <label class="f-label">Days of Operation</label>
+            <input type="text" name="days_of_operation" class="f-input" value="Mon,Tue,Wed,Thu,Fri,Sat,Sun">
+        </div>
+
+        <div class="divider"></div>
+        <div class="a-card-title"><i class="fas fa-chair"></i> Coach Classes</div>
+        <div class="info-panel">
+            Fares are auto-computed from Fare Config (distance × per-km rate).
+            Tatkal quota is set to 20% and RAC to 3% automatically.
+        </div>
+
+        <div id="classRows">
+            <div class="f-row2" style="margin-bottom:12px;">
+                <div class="f-group" style="margin-bottom:0;">
+                    <label class="f-label">Class</label>
+                    <select name="class_name[]" class="f-input">
+                        <option value="SL">SL — Sleeper</option>
+                        <option value="3A">3A — AC 3-Tier</option>
+                        <option value="2A">2A — AC 2-Tier</option>
+                        <option value="1A">1A — AC First</option>
+                        <option value="CC">CC — Chair Car</option>
+                        <option value="2S">2S — Second Sitting</option>
+                    </select>
+                </div>
+                <div class="f-group" style="margin-bottom:0;">
+                    <label class="f-label">No. of Coaches</label>
+                    <input type="number" name="num_coaches[]" class="f-input" value="1" min="1" max="20">
+                </div>
+            </div>
+        </div>
+
+        <button type="button" onclick="addRow()" class="btn-go btn-ghost btn-sm" style="margin-bottom:22px;">
+            <i class="fas fa-plus"></i> Add Another Class
+        </button>
+
+        <div class="divider"></div>
+        <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn-go btn-primary">
+                <i class="fas fa-save"></i> Save Train
+            </button>
+            <a href="{{ url_for('admin.trains') }}" class="btn-go btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addRow() {
+        const opts = `
+            <option value="SL">SL — Sleeper</option>
+            <option value="3A">3A — AC 3-Tier</option>
+            <option value="2A">2A — AC 2-Tier</option>
+            <option value="1A">1A — AC First</option>
+            <option value="CC">CC — Chair Car</option>
+            <option value="2S">2S — Second Sitting</option>`;
+        const d = document.createElement('div');
+        d.className = 'f-row2';
+        d.style.marginBottom = '12px';
+        d.innerHTML = `
+            <div class="f-group" style="margin-bottom:0;">
+                <select name="class_name[]" class="f-input">${opts}</select>
+            </div>
+            <div class="f-group" style="margin-bottom:0;">
+                <input type="number" name="num_coaches[]" class="f-input" value="1" min="1" max="20">
+            </div>`;
+        document.getElementById('classRows').appendChild(d);
+    }
+</script>
+{% endblock %}

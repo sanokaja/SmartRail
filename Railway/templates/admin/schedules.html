@@ -1,0 +1,171 @@
+{% extends 'admin/base.html' %}
+{% block title %}Schedules{% endblock %}
+{% block page_title %}Train Schedules{% endblock %}
+{% block page_subtitle %}Prepare charts to lock booking · Cancel trains and trigger refunds{% endblock %}
+
+{% block head %}
+<style>
+    .sched-card {
+        background: white;
+        border: 2px solid #fde68a;
+        border-left: 5px solid #fde68a;
+        border-radius: 15px;
+        padding: 18px 22px;
+        margin-bottom: 12px;
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: box-shadow 0.2s;
+    }
+    .sched-card:hover    { box-shadow: 0 8px 25px rgba(245,158,11,0.12); }
+    .sched-card.sc-open  { border-left-color: #4caf50; }
+    .sched-card.sc-locked{ border-left-color: #f44336; }
+    .sched-card.sc-canc  { opacity: .55; }
+
+    .pill-wrap { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .pill {
+        font-size: 11px; padding: 3px 10px; border-radius: 20px;
+        font-weight: 700; border: 2px solid;
+    }
+    .p-conf { color:#2e7d32; border-color:#c8e6c9; }
+    .p-wl   { color:#e65100; border-color:#fde68a; }
+    .p-rac  { color:#1565c0; border-color:#bbdefb; }
+    .p-lock { color:#c62828; border-color:#ffcdd2; }
+
+    .sc-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin.trains') }}" class="btn-go btn-ghost btn-sm">
+    <i class="fas fa-train"></i> Trains
+</a>
+{% endblock %}
+
+{% block content %}
+
+{% if not schedules %}
+<div class="a-card" style="text-align:center; padding:60px;">
+    <div style="font-size:56px; margin-bottom:16px;">📅</div>
+    <div style="font-size:20px; font-weight:900; color:#333; margin-bottom:8px;">No upcoming schedules</div>
+    <div style="color:#999; font-size:14px;">
+        Schedules are created automatically when a passenger searches for a train on a date.
+    </div>
+</div>
+{% else %}
+
+<div class="info-panel">
+    Showing {{ schedules|length }} upcoming schedules. &nbsp;
+    <strong style="color:#4caf50;">Green</strong> border = booking open &nbsp;·&nbsp;
+    <strong style="color:#f44336;">Red</strong> border = chart prepared (booking locked).
+</div>
+
+{% for s in schedules %}
+{% set wl_c  = s.bookings|selectattr('booking_status','eq','WaitingList')|list|length %}
+{% set con_c = s.bookings|selectattr('booking_status','eq','Confirmed')|list|length %}
+{% set rac_c = s.bookings|selectattr('booking_status','eq','RAC')|list|length %}
+
+<div class="sched-card
+    {% if s.is_cancelled %}sc-canc
+    {% elif s.chart_prepared %}sc-locked
+    {% else %}sc-open{% endif %}">
+
+    <!-- Left: train info -->
+    <div style="flex:1;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="font-size:15px; font-weight:900; color:#333;">
+                {{ s.train.train_number }} &nbsp;·&nbsp; {{ s.train.train_name }}
+            </div>
+            {% if s.is_cancelled %}
+                <span class="bx bx-cancelled">Cancelled</span>
+            {% elif s.chart_prepared %}
+                <span class="bx bx-cancelled"><i class="fas fa-lock"></i> Chart Locked</span>
+            {% else %}
+                <span class="bx bx-confirmed"><i class="fas fa-lock-open"></i> Open</span>
+            {% endif %}
+        </div>
+
+        <div style="font-size:12px; color:#999; margin-top:4px;">
+            {{ s.train.source }} → {{ s.train.destination }}
+            &nbsp;·&nbsp; Dep {{ s.train.departure_time }}
+        </div>
+
+        <div style="font-size:15px; font-weight:900; color:#f59e0b; margin-top:4px;">
+            {{ s.journey_date.strftime('%A, %d %B %Y') }}
+        </div>
+
+        <div class="pill-wrap">
+            <span class="pill p-conf">✓ {{ con_c }} confirmed</span>
+            {% if wl_c > 0 %}<span class="pill p-wl">⏳ {{ wl_c }} WL</span>{% endif %}
+            {% if rac_c > 0 %}<span class="pill p-rac">{{ rac_c }} RAC</span>{% endif %}
+            {% if s.chart_prepared and s.chart_prepared_at %}
+                <span class="pill p-lock">
+                    🔒 Locked {{ s.chart_prepared_at.strftime('%d %b %I:%M %p') }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right: actions -->
+    <div class="sc-actions">
+        {% if not s.chart_prepared and not s.is_cancelled %}
+
+        <!-- Prepare chart — locks booking -->
+        <form method="POST"
+              action="{{ url_for('admin.prepare_chart', schedule_id=s.id) }}"
+              onsubmit="return confirm('Prepare chart for {{ s.train.train_number }} on {{ s.journey_date }}?\nThis will LOCK all passenger booking for this schedule.')">
+            <button class="btn-go btn-danger btn-sm">
+                <i class="fas fa-lock"></i> Prepare Chart
+            </button>
+        </form>
+
+        <!-- Cancel train — opens modal -->
+        <button class="btn-go btn-danger btn-sm"
+                onclick="openCancel({{ s.id }}, '{{ s.train.train_number }}', '{{ s.journey_date }}', {{ con_c }})">
+            <i class="fas fa-times-circle"></i> Cancel Train
+        </button>
+
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Cancel Modal -->
+<div class="modal-bg" id="cancelModal">
+    <div class="modal-box">
+        <div class="modal-title" style="color:#c62828;">
+            <i class="fas fa-exclamation-triangle"></i> Cancel Train Schedule
+        </div>
+        <div class="modal-sub" id="cancelMsg"></div>
+        <form id="cancelForm" method="POST" action="">
+            <div class="f-group">
+                <label class="f-label">Reason for cancellation *</label>
+                <input type="text" name="reason" class="f-input"
+                       placeholder="e.g. Technical fault, Flooding, Strike…" required>
+            </div>
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button type="button" onclick="closeCancel()" class="btn-go btn-ghost">
+                    Go Back
+                </button>
+                <button type="submit" class="btn-go btn-danger">
+                    <i class="fas fa-times"></i> Confirm Cancellation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openCancel(id, trainNo, date, confirmedCount) {
+        document.getElementById('cancelMsg').textContent =
+            `Cancel train ${trainNo} on ${date}? ${confirmedCount} confirmed booking(s) will be marked for full refund.`;
+        document.getElementById('cancelForm').action = `/admin/schedules/${id}/cancel`;
+        document.getElementById('cancelModal').classList.add('show');
+    }
+    function closeCancel() {
+        document.getElementById('cancelModal').classList.remove('show');
+    }
+</script>
+{% endblock %}

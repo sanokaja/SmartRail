@@ -1,0 +1,81 @@
+{% extends 'admin/base.html' %}
+{% block title %}Edit {{ train.train_number }}{% endblock %}
+{% block page_title %}Edit Train{% endblock %}
+{% block page_subtitle %}{{ train.train_number }} · {{ train.train_name }}{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('admin.trains') }}" class="btn-go btn-ghost btn-sm">
+    <i class="fas fa-arrow-left"></i> Back
+</a>
+{% endblock %}
+{% block content %}
+<div class="a-card" style="max-width:840px;">
+    <form method="POST">
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Train Name *</label>
+                <input type="text" name="train_name" class="f-input" value="{{ train.train_name }}" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Train Number (read-only)</label>
+                <input type="text" class="f-input" value="{{ train.train_number }}" disabled
+                       style="background:#f9f9f9; color:#bbb;">
+            </div>
+        </div>
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Source *</label>
+                <input type="text" name="source" class="f-input" value="{{ train.source }}" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Destination *</label>
+                <input type="text" name="destination" class="f-input" value="{{ train.destination }}" required>
+            </div>
+        </div>
+        <div class="f-row3">
+            <div class="f-group">
+                <label class="f-label">Departure Time *</label>
+                <input type="text" name="departure_time" class="f-input" value="{{ train.departure_time }}" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Arrival Time *</label>
+                <input type="text" name="arrival_time" class="f-input" value="{{ train.arrival_time }}" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Duration *</label>
+                <input type="text" name="duration" class="f-input" value="{{ train.duration }}" required>
+            </div>
+        </div>
+        <div class="f-row2">
+            <div class="f-group">
+                <label class="f-label">Distance (km) *</label>
+                <input type="number" name="distance_km" class="f-input" value="{{ train.distance_km }}" required>
+            </div>
+            <div class="f-group">
+                <label class="f-label">Train Type *</label>
+                <select name="train_type" class="f-input">
+                    {% for tp in ['Rajdhani','Shatabdi','Superfast','Express','Mail'] %}
+                    <option value="{{ tp }}" {% if train.train_type == tp %}selected{% endif %}>{{ tp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="f-group">
+            <label class="f-label">Days of Operation</label>
+            <input type="text" name="days_of_operation" class="f-input" value="{{ train.days_of_operation }}">
+        </div>
+        <div class="f-group">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; color:#333; font-size:14px;">
+                <input type="checkbox" name="is_active" {% if train.is_active %}checked{% endif %}
+                       style="width:18px; height:18px; accent-color:#f59e0b;">
+                Train is Active
+            </label>
+        </div>
+        <div style="display:flex; gap:12px; margin-top:8px;">
+            <button type="submit" class="btn-go btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="{{ url_for('admin.trains') }}" class="btn-go btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

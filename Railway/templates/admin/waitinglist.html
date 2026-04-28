@@ -1,0 +1,282 @@
+{% extends 'admin/base.html' %}
+{% block title %}Waiting List{% endblock %}
+{% block page_title %}Waiting List Queue{% endblock %}
+{% block page_subtitle %}All pending WL passengers — confirm manually or auto-process{% endblock %}
+
+{% block head %}
+<style>
+    /* WL badge — same shape as .passenger-number */
+    .wl-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 42px; height: 42px; border-radius: 50%;
+        font-size: 13px; font-weight: 900; border: 3px solid;
+    }
+    .wl-high   { border-color: #4caf50; color: #4caf50; background: #e8f5e9; }
+    .wl-medium { border-color: #f59e0b; color: #d97706; background: #fff9f0; }
+    .wl-low    { border-color: #f44336; color: #f44336; background: #ffebee; }
+
+    /* group accordion — card style */
+    .group-header {
+        background: white;
+        border: 2px solid #fde68a;
+        border-radius: 15px;
+        padding: 18px 22px;
+        display: flex; align-items: center; justify-content: space-between;
+        cursor: pointer; margin-bottom: 4px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .group-header:hover {
+        border-color: #f59e0b;
+        box-shadow: 0 5px 20px rgba(245,158,11,0.15);
+    }
+    .group-header.open {
+        border-color: #f59e0b;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    .group-body {
+        background: white;
+        border: 2px solid #f59e0b; border-top: none;
+        border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;
+        overflow: hidden; display: none; margin-bottom: 18px;
+    }
+    .group-body.open { display: block; }
+
+    /* action bar — like .journey-details panel */
+    .group-action-bar {
+        background: #fff9f0;
+        border-bottom: 2px solid #fde68a;
+        padding: 12px 20px;
+        display: flex; align-items: center; gap: 12px;
+    }
+
+    /* WL fill bar */
+    .wl-bar { height: 6px; background: #f5f5f5; border-radius: 3px; overflow: hidden; width: 200px; margin-top: 6px; }
+    .wl-bar-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #ea580c); border-radius: 3px; }
+
+    /* summary strip */
+    .sum-strip {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+    }
+    .sum-card {
+        background: white; border-radius: 15px;
+        padding: 20px; text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border-top: 4px solid #f59e0b;
+    }
+    .sum-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .07em; font-weight: 700; margin-bottom: 6px; }
+    .sum-value { font-size: 28px; font-weight: 900; }
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin.bookings', status='WaitingList') }}" class="btn-go btn-ghost btn-sm">
+    <i class="fas fa-list"></i> All WL Bookings
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="sum-strip">
+    <div class="sum-card">
+        <div class="sum-label">Total WL</div>
+        <div class="sum-value" style="color:#f59e0b">{{ wl_bookings|length }}</div>
+    </div>
+    <div class="sum-card" style="border-top-color:#4caf50">
+        <div class="sum-label">WL/1–10 (High)</div>
+        <div class="sum-value" style="color:#4caf50">
+            {{ wl_bookings|selectattr('wl_number','le',10)|list|length }}
+        </div>
+    </div>
+    <div class="sum-card" style="border-top-color:#f44336">
+        <div class="sum-label">WL/30+ (Low)</div>
+        <div class="sum-value" style="color:#f44336">
+            {{ wl_bookings|selectattr('wl_number','ge',30)|list|length }}
+        </div>
+    </div>
+    <div class="sum-card" style="border-top-color:#2196f3">
+        <div class="sum-label">Trains Affected</div>
+        <div class="sum-value" style="color:#2196f3">
+            {{ wl_bookings|map(attribute='schedule.train.train_number')|unique|list|length }}
+        </div>
+    </div>
+</div>
+
+{% if not wl_bookings %}
+<div class="a-card" style="text-align:center; padding:60px 20px;">
+    <div style="font-size:56px; margin-bottom:16px">✅</div>
+    <div style="font-size:20px; font-weight:900; color:#333; margin-bottom:8px">No waiting list passengers!</div>
+    <div style="color:#999; font-size:15px">All bookings are confirmed or RAC.</div>
+</div>
+{% else %}
+
+<!-- Filter -->
+<div style="display:flex; gap:10px; margin-bottom:18px; align-items:center; flex-wrap:wrap;">
+    <select id="clsFilter" onchange="filterGroups()"
+            style="padding:10px 14px; border:2px solid #e0e0e0; border-radius:8px; font-family:'Lato',sans-serif; font-weight:700; font-size:13px;">
+        <option value="">All Classes</option>
+        {% for c in ['SL','3A','2A','1A'] %}
+        <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" id="trainFilter" placeholder="Filter by train number…" oninput="filterGroups()"
+           style="padding:10px 14px; border:2px solid #e0e0e0; border-radius:8px; font-family:'Lato',sans-serif; font-size:13px; width:200px;">
+    <span style="color:#999; font-size:13px; margin-left:auto;">Click a row to expand</span>
+</div>
+
+<!-- Build groups -->
+{% set groups = {} %}
+{% for b in wl_bookings %}
+    {% set key = b.schedule.train.train_number~'|'~b.class_name~'|'~b.schedule.journey_date.strftime('%Y-%m-%d') %}
+    {% if key not in groups %}{% if groups.update({key:[]}) %}{% endif %}{% endif %}
+    {% if groups[key].append(b) %}{% endif %}
+{% endfor %}
+
+<div id="wl-list">
+{% for key, passengers in groups.items() %}
+{% set parts = key.split('|') %}
+{% set train_no = parts[0] %}{% set cls = parts[1] %}{% set jdate = parts[2] %}
+{% set first = passengers[0] %}{% set train = first.schedule.train %}
+{% set fill_pct = [(passengers|length / 50 * 100), 100]|min|int %}
+
+<div class="wl-group" data-train="{{ train_no }}" data-cls="{{ cls }}">
+    <div class="group-header" onclick="toggleGroup(this)">
+        <div>
+            <div style="font-size:15px; font-weight:900; color:#333;">
+                {{ train.train_number }} &nbsp;·&nbsp; {{ train.train_name }}
+                <span class="bx bx-wl" style="margin-left:8px;">{{ cls }}</span>
+            </div>
+            <div style="font-size:12px; color:#999; margin-top:3px;">
+                {{ train.source }} → {{ train.destination }} &nbsp;·&nbsp; {{ jdate }}
+            </div>
+            <div class="wl-bar">
+                <div class="wl-bar-fill" style="width:{{ fill_pct }}%"></div>
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:28px; font-weight:900; color:#f59e0b;">{{ passengers|length }}</div>
+            <div style="font-size:11px; color:#999;">on WL</div>
+            <div style="font-size:11px; color:#bbb; margin-top:2px;">
+                WL/1 → WL/{{ passengers|map(attribute='wl_number')|max }}
+            </div>
+        </div>
+    </div>
+
+    <div class="group-body">
+        <div class="group-action-bar">
+            <span style="font-size:13px; color:#888;">
+                <i class="fas fa-info-circle" style="color:#f59e0b;"></i>
+                Click <strong>Confirm</strong> on any passenger below to assign them the next free berth.
+            </span>
+        </div>
+
+        <table class="a-table">
+            <thead>
+                <tr>
+                    <th>WL#</th>
+                    <th>Passenger</th>
+                    <th>Age / Gender</th>
+                    <th>Quota</th>
+                    <th>Booked On</th>
+                    <th>Fare</th>
+                    <th>Chance</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in passengers|sort(attribute='wl_number') %}
+                {% set wl = b.wl_number or loop.index %}
+                {% if wl <= 10 %}
+                    {% set wc = 'wl-high' %}{% set ch = 'High' %}{% set cc = '#4caf50' %}
+                {% elif wl <= 25 %}
+                    {% set wc = 'wl-medium' %}{% set ch = 'Medium' %}{% set cc = '#f59e0b' %}
+                {% else %}
+                    {% set wc = 'wl-low' %}{% set ch = 'Low' %}{% set cc = '#f44336' %}
+                {% endif %}
+                <tr>
+                    <td><div class="wl-badge {{ wc }}">{{ wl }}</div></td>
+                    <td>
+                        <div style="font-weight:700;">{{ b.passenger_name }}</div>
+                        <div style="font-size:11px; color:#bbb;">PNR: {{ b.pnr_number }}</div>
+                    </td>
+                    <td>{{ b.passenger_age }} / {{ b.passenger_gender }}</td>
+                    <td>
+                        <span class="bx {% if b.quota_type=='Tatkal' %}bx-tatkal{% else %}bx-pending{% endif %}">
+                            {{ b.quota_type or 'General' }}
+                        </span>
+                    </td>
+                    <td style="font-size:12px; color:#999;">
+                        {{ b.booking_date.strftime('%d %b %Y') }}<br>
+                        <span style="color:#bbb;">{{ b.booking_date.strftime('%I:%M %p') }}</span>
+                    </td>
+                    <td style="font-weight:700;">₹{{ "%.0f"|format(b.fare) }}</td>
+                    <td><strong style="color:{{ cc }};">{{ ch }}</strong></td>
+                    <td>
+                        <button class="btn-go btn-success btn-sm"
+                                onclick="openModal({{ b.id }}, '{{ b.passenger_name }}', {{ wl }})">
+                            <i class="fas fa-check"></i> Confirm
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Confirm Modal -->
+<div class="modal-bg" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-title">
+            <i class="fas fa-check-circle" style="color:#4caf50;"></i> Confirm WL Ticket
+        </div>
+        <div class="modal-sub" id="modalMsg">
+            This will find the next free berth and assign it to this passenger.
+        </div>
+        <form id="modalForm" method="POST" action="">
+            <div style="display:flex; gap:12px; justify-content:flex-end;">
+                <button type="button" onclick="closeModal()" class="btn-go btn-ghost">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-go btn-success">
+                    <i class="fas fa-check"></i> Yes, Confirm Seat
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleGroup(h) {
+        h.classList.toggle('open');
+        h.nextElementSibling.classList.toggle('open');
+    }
+    function openModal(id, name, wl) {
+        document.getElementById('modalMsg').textContent =
+            `Confirm WL/${wl} for ${name}. A free berth will be automatically assigned.`;
+        document.getElementById('modalForm').action = `/admin/waitinglist/confirm/${id}`;
+        document.getElementById('confirmModal').classList.add('show');
+    }
+    function closeModal() {
+        document.getElementById('confirmModal').classList.remove('show');
+    }
+    function filterGroups() {
+        const cls   = document.getElementById('clsFilter').value.toLowerCase();
+        const train = document.getElementById('trainFilter').value.toLowerCase();
+        document.querySelectorAll('.wl-group').forEach(g => {
+            const ok = (cls === '' || g.dataset.cls.toLowerCase() === cls) &&
+                       (train === '' || g.dataset.train.toLowerCase().includes(train));
+            g.style.display = ok ? '' : 'none';
+        });
+    }
+    // auto-open if only one group
+    const gs = document.querySelectorAll('.wl-group');
+    if (gs.length === 1) gs[0].querySelector('.group-header').click();
+</script>
+{% endblock %}

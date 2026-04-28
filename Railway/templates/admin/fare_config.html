@@ -1,0 +1,69 @@
+{% extends 'admin/base.html' %}
+{% block title %}Fare Config{% endblock %}
+{% block page_title %}Fare Configuration{% endblock %}
+{% block page_subtitle %}Real Indian Railways per-km rates and surcharges{% endblock %}
+{% block topbar_actions %}
+<a href="{{ url_for('admin.add_fare_config') }}" class="btn-go btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Add Config
+</a>
+<form method="POST" action="{{ url_for('admin.seed_default_fares') }}" style="display:inline;">
+    <button class="btn-go btn-ghost btn-sm">
+        <i class="fas fa-database"></i> Seed Real IR Rates
+    </button>
+</form>
+{% endblock %}
+{% block content %}
+<!-- info panel — same as .journey-details style -->
+<div class="info-panel">
+    <i class="fas fa-info-circle"></i>
+    Fare = (distance_km × per_km_rate) + reservation_charge + superfast_surcharge.
+    Tatkal surcharge is added for Tatkal bookings. GST 5% if total &gt; ₹1000.
+</div>
+
+<div class="a-card" style="padding:0; overflow:hidden;">
+    <div style="overflow-x:auto;">
+    <table class="a-table">
+        <thead><tr>
+            <th>Class</th><th>Train Type</th><th>Per-km (₹)</th>
+            <th>Reservation (₹)</th><th>Superfast (₹)</th><th>Tatkal (₹)</th>
+            <th>GST?</th><th>Sample 500km</th><th>Edit</th>
+        </tr></thead>
+        <tbody>
+        {% for c in configs %}
+        <tr>
+            <td><span class="bx bx-pending">{{ c.class_name }}</span></td>
+            <td>
+                <span class="bx {% if c.train_type in ('Rajdhani','Shatabdi') %}bx-tatkal
+                    {% elif c.train_type == 'Superfast' %}bx-confirmed
+                    {% else %}bx-pending{% endif %}">{{ c.train_type }}</span>
+            </td>
+            <td style="font-weight:900; color:#f59e0b;">₹{{ c.per_km_rate }}</td>
+            <td>₹{{ c.reservation_charge|int }}</td>
+            <td>₹{{ c.superfast_surcharge|int }}</td>
+            <td style="color:#9c27b0; font-weight:700;">₹{{ c.tatkal_surcharge|int }}</td>
+            <td>
+                {% if c.gst_applicable %}<span class="bx bx-confirmed">Yes</span>
+                {% else %}<span style="color:#bbb;">No</span>{% endif %}
+            </td>
+            <td style="font-size:12px; color:#999; font-weight:700;">
+                ₹{{ ((500 * c.per_km_rate) + c.reservation_charge + c.superfast_surcharge)|int }}
+            </td>
+            <td>
+                <a href="{{ url_for('admin.edit_fare_config', cfg_id=c.id) }}"
+                   class="btn-go btn-ghost btn-sm">
+                    <i class="fas fa-edit"></i>
+                </a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="9" style="text-align:center; padding:40px; color:#bbb;">
+                No configs yet. Click "Seed Real IR Rates" to start.
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

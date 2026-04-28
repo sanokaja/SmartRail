@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Ticket - RAILWAY RESERVATION</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .booking-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .booking-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        .booking-header h2 { color: #667eea; font-weight: 700; }
+
+        .journey-details {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
+        }
+        .journey-details h5 { color: #667eea; font-weight: 700; margin-bottom: 15px; }
+        .detail-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 16px; }
+        .detail-label { color: #666; font-weight: 600; }
+        .detail-value { color: #333; font-weight: 700; }
+
+        .passenger-section { margin: 30px 0; }
+
+        .passenger-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .passenger-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .passenger-number {
+            background: #667eea;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .remove-passenger {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .remove-passenger:hover { background: #d32f2f; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+        }
+
+        .add-passenger-btn {
+            width: 100%;
+            padding: 15px;
+            background: white;
+            border: 2px dashed #667eea;
+            color: #667eea;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .add-passenger-btn:hover { background: #f8f9ff; border-style: solid; }
+
+        @media (max-width: 768px) {
+            .booking-container { padding: 20px; }
+            .detail-row { flex-direction: column; gap: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="booking-container">
+    <a href="javascript:history.back()" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Search Results
+    </a>
+
+    <div class="booking-header">
+        <h2><i class="fas fa-ticket-alt"></i> Book Your Ticket</h2>
+    </div>
+
+    <!-- Journey Details -->
+    <div class="journey-details">
+        <h5><i class="fas fa-train"></i> Journey Details</h5>
+        <div class="detail-row">
+            <span class="detail-label">Train:</span>
+            <span class="detail-value">{{ train.train_name }} ({{ train.train_number }})</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">From:</span>
+            <span class="detail-value">{{ source }} - {{ train.departure_time }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">To:</span>
+            <span class="detail-value">{{ destination }} - {{ train.arrival_time }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Date:</span>
+            <span class="detail-value">{{ date }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Class:</span>
+            <span class="detail-value">{{ class_name }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Duration:</span>
+            <span class="detail-value">{{ train.duration }}</span>
+        </div>
+    </div>
+
+    <!-- Booking Form -->
+    <form id="bookingForm" method="POST" action="{{ url_for('main.confirm_booking') }}">
+        <input type="hidden" name="train_number" value="{{ train.train_number }}">
+        <input type="hidden" name="class_name"   value="{{ class_name }}">
+        <input type="hidden" name="journey_date" value="{{ journey_date }}">
+        <input type="hidden" name="schedule_id"  value="{{ schedule_id }}">
+
+        <!-- Hidden fields: seat allocation written by JS before submit -->
+
+        <div class="passenger-section">
+            <h4><i class="fas fa-users"></i> Passenger Details</h4>
+
+            <div id="passengersContainer">
+                <!-- Passenger 1 — always present -->
+                <div class="passenger-card" data-passenger="1">
+                    <div class="passenger-header">
+                        <span class="passenger-number">Passenger 1</span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Full Name *</label>
+                            <input type="text" class="form-control pax-name"
+                                   name="passenger_name_1" required>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Age *</label>
+                            <input type="number" class="form-control pax-age"
+                                   name="passenger_age_1" min="1" max="120"
+                                   required>
+                        </div>
+                        <div class="col-md-3 form-group">
+                            <label>Gender *</label>
+                            <select class="form-control pax-gender"
+                                    name="passenger_gender_1" required>
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="add-passenger-btn" onclick="addPassenger()">
+                <i class="fas fa-plus-circle"></i> Add Another Passenger
+            </button>
+
+        </div>
+
+        <!-- Fare Summary -->
+        <div class="fare-summary">
+            <h5><i class="fas fa-rupee-sign"></i> Fare Summary</h5>
+
+            <div style="font-size:13px;color:#888;margin-bottom:8px;font-weight:600;
+                        text-transform:uppercase;letter-spacing:.05em">Per Passenger</div>
+
+            <div class="fare-row">
+                <span>Base fare (distance × per-km rate):</span>
+                <span>₹{{ "%.2f"|format(fare_breakdown.base_fare) }}</span>
+            </div>
+            <div class="fare-row">
+                <span>Reservation charge:</span>
+                <span>₹{{ "%.2f"|format(fare_breakdown.reservation_charge) }}</span>
+            </div>
+            {% if fare_breakdown.superfast_surcharge > 0 %}
+            <div class="fare-row">
+                <span>Superfast surcharge:</span>
+                <span>₹{{ "%.2f"|format(fare_breakdown.superfast_surcharge) }}</span>
+            </div>
+            {% endif %}
+            {% if fare_breakdown.tatkal_surcharge > 0 %}
+            <div class="fare-row" style="color:#c05621;">
+                <span>Tatkal surcharge:</span>
+                <span>₹{{ "%.2f"|format(fare_breakdown.tatkal_surcharge) }}</span>
+            </div>
+            {% endif %}
+            {% if fare_breakdown.gst > 0 %}
+            <div class="fare-row">
+                <span>GST (5% on fare above ₹1000):</span>
+                <span>₹{{ "%.2f"|format(fare_breakdown.gst) }}</span>
+            </div>
+            {% endif %}
+
+            <div class="fare-row" style="border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;">
+                <span style="font-weight:600;">Per passenger total:</span>
+                <span style="font-weight:600;">₹{{ "%.2f"|format(fare_breakdown.total) }}</span>
+            </div>
+
+            <div style="height:1px;background:#667eea;margin:15px 0;opacity:.3;"></div>
+
+            <div style="font-size:13px;color:#888;margin-bottom:8px;font-weight:600;
+                        text-transform:uppercase;letter-spacing:.05em">All Passengers</div>
+
+            <div class="fare-row">
+                <span>Number of passengers:</span>
+                <span id="passengerCount">1</span>
+            </div>
+            <div class="fare-row">
+                <span>Total base fare:</span>
+                <span>₹<span id="subtotalAmount">{{ "%.2f"|format(fare_breakdown.base_fare + fare_breakdown.reservation_charge + fare_breakdown.superfast_surcharge + fare_breakdown.tatkal_surcharge) }}</span></span>
+            </div>
+            {% if fare_breakdown.gst > 0 %}
+            <div class="fare-row">
+                <span>Total GST:</span>
+                <span>₹<span id="gstAmount">{{ "%.2f"|format(fare_breakdown.gst) }}</span></span>
+            </div>
+            {% endif %}
+
+            <div class="fare-row fare-total">
+                <span>Total Amount:</span>
+                <span>₹<span id="totalAmount">{{ "%.2f"|format(fare_breakdown.total) }}</span></span>
+            </div>
+        </div>
+
+        <button type="submit" class="proceed-btn"
+            onclick="this.disabled=true; this.innerText='Processing...'; this.form.submit();">
+            <i class="fas fa-credit-card"></i> Proceed to Payment
+        </button>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let passengerCount = 1;
+    const maxPassengers = 6;
+    const fareComponents = {
+        subtotal: parseFloat('{{ fare_breakdown.base_fare + fare_breakdown.reservation_charge + fare_breakdown.superfast_surcharge + fare_breakdown.tatkal_surcharge }}'),
+        gst:      parseFloat('{{ fare_breakdown.gst }}'),
+        total:    parseFloat('{{ fare_breakdown.total }}')
+    };
+
+    function updateFareSummary() {
+        const count = document.querySelectorAll('.passenger-card').length;
+        document.getElementById('passengerCount').textContent = count;
+
+        const subtotal = (fareComponents.subtotal * count).toFixed(2);
+        const gst      = (fareComponents.gst      * count).toFixed(2);
+        const total    = (fareComponents.total     * count).toFixed(2);
+
+        document.getElementById('subtotalAmount').textContent = subtotal;
+        if (document.getElementById('gstAmount'))
+            document.getElementById('gstAmount').textContent = gst;
+        document.getElementById('totalAmount').textContent = total;
+    }
+
+    function renumberPassengers() {
+        document.querySelectorAll('.passenger-card').forEach((card, idx) => {
+            const num = idx + 1;
+            card.dataset.passenger = num;
+            card.querySelector('.passenger-number').textContent = 'Passenger ' + num;
+
+            card.querySelector('.pax-name').name   = 'passenger_name_'   + num;
+            card.querySelector('.pax-age').name    = 'passenger_age_'    + num;
+            card.querySelector('.pax-gender').name = 'passenger_gender_' + num;
+
+            // Show/hide remove button: only show for passengers 2+
+            const removeBtn = card.querySelector('.remove-passenger');
+            if (removeBtn) removeBtn.style.display = num === 1 ? 'none' : 'inline-block';
+        });
+    }
+
+    function addPassenger() {
+        if (document.querySelectorAll('.passenger-card').length >= maxPassengers) {
+            alert('Maximum ' + maxPassengers + ' passengers allowed per booking.');
+            return;
+        }
+
+        passengerCount++;
+        const num = passengerCount;
+
+        const card = document.createElement('div');
+        card.className = 'passenger-card';
+        card.dataset.passenger = num;
+        card.innerHTML = `
+            <div class="passenger-header">
+                <span class="passenger-number">Passenger ${num}</span>
+                <button type="button" class="remove-passenger" onclick="removePassenger(this)">
+                    <i class="fas fa-times"></i> Remove
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label>Full Name *</label>
+                    <input type="text" class="form-control pax-name"
+                           name="passenger_name_${num}" required>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label>Age *</label>
+                    <input type="number" class="form-control pax-age"
+                           name="passenger_age_${num}" min="1" max="120" required>
+                </div>
+                <div class="col-md-3 form-group">
+                    <label>Gender *</label>
+                    <select class="form-control pax-gender"
+                            name="passenger_gender_${num}" required>
+                        <option value="">Select</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>`;
+
+        document.getElementById('passengersContainer').appendChild(card);
+        renumberPassengers();
+        updateFareSummary();
+    }
+
+    function removePassenger(btn) {
+        const card = btn.closest('.passenger-card');
+        card.remove();
+        renumberPassengers();
+        updateFareSummary();
+    }
+
+    // Hide remove button on passenger 1 on page load
+    renumberPassengers();
+
+    // ── Form validation ──
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        if (document.querySelectorAll('.passenger-card').length === 0) {
+            e.preventDefault();
+            alert('Please add at least one passenger');
+        }
+    });
+</script>
+</body>
+</html>

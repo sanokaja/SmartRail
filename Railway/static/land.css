@@ -1,0 +1,156 @@
+/* ===== GLOBAL ===== */
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Lato', sans-serif;
+    background-image: url(images/landbg.png);
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+    background-color: rgba(235, 231, 207, 0.092);
+}
+
+.nav-link {
+    color: aliceblue !important;
+    font-size: 20px;
+}
+
+.logo {
+    width: 65px;
+    background-color: rgba(235, 237, 238, 0.97);
+}
+
+/* ===== INTRO ===== */
+.container-intro {
+    padding: 40px;
+    color: white;
+}
+
+.container-intro h1 {
+    font-size: 100px;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.book {
+    margin-left: 270px;
+    margin-top: 20px;
+}
+
+.bu {
+    border-radius: 20px;
+}
+
+/* ===== SEARCH CONTAINER ===== */
+.container-search {
+    width: 1134px;
+    height: 150px;
+    margin: 40px auto;
+    background-color: aliceblue;
+    display: flex;
+    align-items: center;
+}
+
+.container-search .search {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* LEFT INPUT BLOCKS */
+.source,
+.destination,
+.date {
+    width: 260px;
+    padding: 20px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 3px solid black;
+    box-sizing: border-box;
+}
+
+/* LABELS */
+.source label,
+.destination label,
+.date label {
+    font-size: 36px;
+}
+
+/* INPUTS */
+.source input,
+.destination input,
+.date input {
+    height: 55px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 18px;
+}
+
+/* ===== SEARCH BUTTON (FIXED) ===== */
+.search-btn {
+    width: 354px;
+    height: 100%;
+    background-color: #198754;   /* BOOTSTRAP GREEN */
+    border: none;
+    color: white;
+    font-size: 40px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.search-btn:hover {
+    background-color: #146c43;
+}
+
+.search-btn:active {
+    background-color: #0d5132;
+}
+
+/* ===== SCROLL CAROUSEL ===== */
+.scroll-carousel {
+    width: 100%;
+    overflow: hidden;
+    background-color: white;
+}
+
+.scroll-track {
+    display: flex;
+    animation: scroll 30s linear infinite;
+}
+
+.scroll-content {
+    display: flex;
+}
+
+.scroll-track img {
+    width: 250px;
+    height: 60px;
+    margin: 0 20px;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ===== FOOTER ===== */
+footer {
+    background-color: rgba(178, 186, 194, 0.577);
+    margin-top: 100px;
+}
+
+footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+footer a {
+    text-decoration: none;
+    color: #c1cad0;
+}

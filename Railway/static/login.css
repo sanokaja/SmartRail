@@ -1,0 +1,35 @@
+/* login.css */
+
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    
+    background: url("images/tra.jpg") no-repeat center center fixed;
+
+
+    background-size: cover; /* Ensures it stretches proportionally */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+form {
+    background-color: rgba(244, 250, 250, 0.903);
+    padding: 0 40px 40px 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(19, 18, 18, 0.1);
+    width: 400px;
+    
+}
+
+h1 {
+    font-weight: bold;
+    color: #333;
+}
+label {
+    font-size:25px;
+    font-weight: 450;
+}
